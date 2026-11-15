@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>密碼學四大機制 Demo</title>
+<style>
+  :root{
+    --bg:#0f1420; --card:#171f2e; --card2:#1e2838; --line:#2b3850;
+    --txt:#e6ecf5; --mut:#93a2bd; --acc:#5b9dff; --acc2:#7ee0b8;
+    --warn:#ffb86b; --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(160deg,#0f1420,#131b2b);color:var(--txt);
+    font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;line-height:1.6}
+  header{padding:28px 20px 18px;text-align:center;border-bottom:1px solid var(--line)}
+  header h1{margin:0 0 6px;font-size:1.5rem;letter-spacing:.5px}
+  header p{margin:0;color:var(--mut);font-size:.9rem}
+  .wrap{max-width:860px;margin:0 auto;padding:18px 16px 60px}
+  .tabs{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 10px}
+  .tab{flex:1 1 auto;min-width:140px;padding:11px 10px;border:1px solid var(--line);
+    background:var(--card);color:var(--mut);border-radius:10px;cursor:pointer;font-size:.9rem;
+    text-align:center;transition:.15s}
+  .tab:hover{border-color:var(--acc)}
+  .tab.on{background:var(--acc);color:#07101f;border-color:var(--acc);font-weight:700}
+  .panel{display:none;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:8px}
+  .panel.on{display:block;animation:fade .2s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .panel h2{margin:0 0 4px;font-size:1.15rem}
+  .algo{display:inline-block;font:600 .72rem var(--mono);color:var(--acc2);
+    background:#13271f;border:1px solid #27493a;padding:2px 8px;border-radius:6px;margin-bottom:12px}
+  .desc{color:var(--mut);font-size:.86rem;margin:0 0 16px}
+  label{display:block;font-size:.8rem;color:var(--mut);margin:14px 0 5px}
+  textarea,input{width:100%;background:var(--card2);border:1px solid var(--line);color:var(--txt);
+    border-radius:9px;padding:10px 12px;font-size:.9rem;font-family:inherit;resize:vertical}
+  textarea{min-height:68px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  button.act{background:var(--acc);color:#07101f;border:none;border-radius:9px;padding:10px 18px;
+    font-weight:700;cursor:pointer;font-size:.88rem}
+  button.ghost{background:transparent;color:var(--acc);border:1px solid var(--line)}
+  button.act:hover{filter:brightness(1.08)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  .out{margin-top:16px}
+  .out .k{font-size:.74rem;color:var(--mut);margin:12px 0 4px;text-transform:uppercase;letter-spacing:.5px}
+  .box{background:#0c1220;border:1px solid var(--line);border-radius:9px;padding:11px 12px;
+    font-family:var(--mono);font-size:.78rem;word-break:break-all;white-space:pre-wrap;color:#cfe0ff;min-height:18px}
+  .box.ok{border-color:#27493a;color:var(--acc2)}
+  .box.bad{border-color:#4a2730;color:#ff9fb0}
+  .steps{list-style:none;padding:0;margin:0 0 14px;display:flex;flex-wrap:wrap;gap:6px}
+  .steps li{font-size:.72rem;color:var(--mut);background:var(--card2);border:1px solid var(--line);
+    padding:3px 9px;border-radius:20px}
+  .hint{font-size:.76rem;color:var(--warn);margin-top:10px}
+  footer{text-align:center;color:var(--mut);font-size:.76rem;padding:10px 16px 30px}
+  code{font-family:var(--mono);color:#cfe0ff}
+</style>
+</head>
+<body>
+<header>
+  <h1>🔐 密碼學四大機制 Demo</h1>
+  <p>Hash · Symmetric (AES-256-GCM) · Asymmetric (RSA-OAEP 2048) · Digital Signature (ECDSA P-256 + SHA-256)</p>
+</header>
+
+<div class="wrap">
+  <div class="tabs">
+    <div class="tab on" data-t="hash">① Hash 雜湊</div>
+    <div class="tab" data-t="sym">② 對稱式加密</div>
+    <div class="tab" data-t="asym">③ 非對稱式加密</div>
+    <div class="tab" data-t="sign">④ 數位簽章</div>
+  </div>
+
+  <!-- HASH -->
+  <section class="panel on" id="hash">
+    <h2>① Hash Function 雜湊函數</h2>
+    <div class="algo">SHA-256</div>
+    <p class="desc">單向、固定長度、抗碰撞。相同輸入必得相同雜湊;改一個字元,輸出完全不同(雪崩效應)。用於完整性驗證與密碼儲存。</p>
+    <ul class="steps"><li>輸入訊息</li><li>→ SHA-256</li><li>→ 64 位十六進位摘要</li></ul>
+    <label>輸入文字</label>
+    <textarea id="h-in">Hello 資訊安全!</textarea>
+    <div class="row"><button class="act" id="h-go">計算 SHA-256</button></div>
+    <div class="out">
+      <div class="k">雜湊摘要 (hex, 256-bit)</div>
+      <div class="box" id="h-out"></div>
+    </div>
+  </section>
+
+  <!-- SYMMETRIC -->
+  <section class="panel" id="sym">
+    <h2>② 對稱式加密 Symmetric Encryption</h2>
+    <div class="algo">AES-256-GCM</div>
+    <p class="desc">加密與解密使用「同一把金鑰」。GCM 模式同時提供機密性與完整性(附帶驗證標籤)。每次加密使用隨機 IV。</p>
+    <ul class="steps"><li>產生 256-bit 金鑰</li><li>隨機 IV</li><li>加密 → 密文</li><li>同金鑰解密</li></ul>
+    <label>明文</label>
+    <textarea id="s-in">這是一段機密訊息。</textarea>
+    <div class="row">
+      <button class="act" id="s-key">1. 產生金鑰</button>
+      <button class="act" id="s-enc" disabled>2. 加密</button>
+      <button class="act" id="s-dec" disabled>3. 解密</button>
+    </div>
+    <div class="out">
+      <div class="k">金鑰 Key (hex, 256-bit)</div><div class="box" id="s-k"></div>
+      <div class="k">IV (hex, 96-bit)</div><div class="box" id="s-iv"></div>
+      <div class="k">密文 Ciphertext (base64)</div><div class="box" id="s-ct"></div>
+      <div class="k">解密還原</div><div class="box" id="s-pt"></div>
+    </div>
+  </section>
+
+  <!-- ASYMMETRIC -->
+  <section class="panel" id="asym">
+    <h2>③ 非對稱式加密 Asymmetric Encryption</h2>
+    <div class="algo">RSA-OAEP 2048</div>
+    <p class="desc">金鑰成對:<b>公鑰加密、私鑰解密</b>。任何人可用公鑰加密,只有持私鑰者能解密,解決金鑰分發問題。</p>
+    <ul class="steps"><li>產生 RSA 金鑰對</li><li>公鑰加密</li><li>私鑰解密</li></ul>
+    <label>明文</label>
+    <textarea id="a-in">用公鑰加密我吧!</textarea>
+    <div class="row">
+      <button class="act" id="a-key">1. 產生金鑰對</button>
+      <button class="act" id="a-enc" disabled>2. 公鑰加密</button>
+      <button class="act" id="a-dec" disabled>3. 私鑰解密</button>
+    </div>
+    <div class="out">
+      <div class="k">公鑰 Public Key (base64, SPKI)</div><div class="box" id="a-pub"></div>
+      <div class="k">密文 Ciphertext (base64)</div><div class="box" id="a-ct"></div>
+      <div class="k">解密還原</div><div class="box" id="a-pt"></div>
+    </div>
+  </section>
+
+  <!-- SIGNATURE -->
+  <section class="panel" id="sign">
+    <h2>④ 數位簽章 Digital Signature</h2>
+    <div class="algo">ECDSA P-256 + SHA-256</div>
+    <p class="desc"><b>私鑰簽章、公鑰驗證</b>。先對訊息做 SHA-256,再用私鑰簽章;接收方用公鑰驗證,提供完整性、鑑別性與不可否認性。試著改動訊息再驗證,會失敗。</p>
+    <ul class="steps"><li>產生 EC 金鑰對</li><li>私鑰簽章</li><li>公鑰驗證</li></ul>
+    <label>訊息</label>
+    <textarea id="g-in">我同意這份合約內容。</textarea>
+    <div class="row">
+      <button class="act" id="g-key">1. 產生金鑰對</button>
+      <button class="act" id="g-sign" disabled>2. 簽章</button>
+      <button class="act" id="g-ver" disabled>3. 驗證</button>
+    </div>
+    <div class="out">
+      <div class="k">簽章 Signature (base64)</div><div class="box" id="g-sig"></div>
+      <div class="k">驗證結果</div><div class="box" id="g-res"></div>
+    </div>
+    <p class="hint">提示:簽章後,把上面「訊息」改掉再按「驗證」,結果會變成 ❌ 無效。</p>
+  </section>
+</div>
+
+<footer>全程使用瀏覽器內建 Web Crypto API (window.crypto.subtle) 本機即時運算,資料不外傳。</footer>
+
+<script>
+const $=id=>document.getElementById(id);
+const enc=new TextEncoder(), dec=new TextDecoder();
+const toHex=buf=>[...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+const toB64=buf=>btoa(String.fromCharCode(...new Uint8Array(buf)));
+const fromB64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+
+// tabs
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));
+  t.classList.add('on'); $(t.dataset.t).classList.add('on');
+});
+
+/* ① HASH */
+$('h-go').onclick=async()=>{
+  const d=await crypto.subtle.digest('SHA-256',enc.encode($('h-in').value));
+  $('h-out').textContent=toHex(d);
+  $('h-out').className='box ok';
+};
+
+/* ② AES-256-GCM */
+let symKey=null,symIv=null;
+$('s-key').onclick=async()=>{
+  symKey=await crypto.subtle.generateKey({name:'AES-GCM',length:256},true,['encrypt','decrypt']);
+  const raw=await crypto.subtle.exportKey('raw',symKey);
+  $('s-k').textContent=toHex(raw);
+  $('s-enc').disabled=false; $('s-dec').disabled=true;
+  $('s-ct').textContent=''; $('s-pt').textContent=''; $('s-iv').textContent='';
+};
+let symCt=null;
+$('s-enc').onclick=async()=>{
+  symIv=crypto.getRandomValues(new Uint8Array(12));
+  symCt=await crypto.subtle.encrypt({name:'AES-GCM',iv:symIv},symKey,enc.encode($('s-in').value));
+  $('s-iv').textContent=toHex(symIv);
+  $('s-ct').textContent=toB64(symCt);
+  $('s-dec').disabled=false; $('s-pt').textContent='';
+};
+$('s-dec').onclick=async()=>{
+  try{
+    const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:symIv},symKey,symCt);
+    $('s-pt').textContent=dec.decode(pt); $('s-pt').className='box ok';
+  }catch(e){$('s-pt').textContent='解密失敗:'+e.message;$('s-pt').className='box bad';}
+};
+
+/* ③ RSA-OAEP 2048 */
+let rsa=null,rsaCt=null;
+$('a-key').onclick=async()=>{
+  rsa=await crypto.subtle.generateKey(
+    {name:'RSA-OAEP',modulusLength:2048,publicExponent:new Uint8Array([1,0,1]),hash:'SHA-256'},
+    true,['encrypt','decrypt']);
+  const spki=await crypto.subtle.exportKey('spki',rsa.publicKey);
+  $('a-pub').textContent=toB64(spki);
+  $('a-enc').disabled=false; $('a-dec').disabled=true;
+  $('a-ct').textContent=''; $('a-pt').textContent='';
+};
+$('a-enc').onclick=async()=>{
+  rsaCt=await crypto.subtle.encrypt({name:'RSA-OAEP'},rsa.publicKey,enc.encode($('a-in').value));
+  $('a-ct').textContent=toB64(rsaCt);
+  $('a-dec').disabled=false; $('a-pt').textContent='';
+};
+$('a-dec').onclick=async()=>{
+  try{
+    const pt=await crypto.subtle.decrypt({name:'RSA-OAEP'},rsa.privateKey,rsaCt);
+    $('a-pt').textContent=dec.decode(pt); $('a-pt').className='box ok';
+  }catch(e){$('a-pt').textContent='解密失敗:'+e.message;$('a-pt').className='box bad';}
+};
+
+/* ④ ECDSA P-256 + SHA-256 */
+let ec=null,sig=null,signedMsg=null;
+$('g-key').onclick=async()=>{
+  ec=await crypto.subtle.generateKey({name:'ECDSA',namedCurve:'P-256'},true,['sign','verify']);
+  $('g-sign').disabled=false; $('g-ver').disabled=true;
+  $('g-sig').textContent=''; $('g-res').textContent='';
+};
+$('g-sign').onclick=async()=>{
+  signedMsg=$('g-in').value;
+  sig=await crypto.subtle.sign({name:'ECDSA',hash:'SHA-256'},ec.privateKey,enc.encode(signedMsg));
+  $('g-sig').textContent=toB64(sig);
+  $('g-ver').disabled=false; $('g-res').textContent='';
+};
+$('g-ver').onclick=async()=>{
+  const ok=await crypto.subtle.verify({name:'ECDSA',hash:'SHA-256'},ec.publicKey,sig,enc.encode($('g-in').value));
+  if(ok){$('g-res').textContent='✅ 簽章有效 — 訊息未被竄改';$('g-res').className='box ok';}
+  else{$('g-res').textContent='❌ 簽章無效 — 訊息已被更動或金鑰不符';$('g-res').className='box bad';}
+};
+
+// auto-run hash on load
+$('h-go').click();
+</script>
+</body>
+</html>
